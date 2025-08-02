@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # interfaz web
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - galactic_net
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: galactic_db
+      POSTGRES_USER: galactic_user
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - galactic_net
+
+  producer:
+    build: ./producer
+    depends_on:
+      - rabbitmq
+      - postgres
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=postgres
+    networks:
+      - galactic_net
+
+  agent:
+    build: ./agent
+    depends_on:
+      - rabbitmq
+      - postgres
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=postgres
+    networks:
+      - galactic_net
+
+volumes:
+  pg_data:
+  rabbitmq_data:
+
+networks:
+  galactic_net:
