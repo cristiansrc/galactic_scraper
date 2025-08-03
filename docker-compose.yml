@@ -19,7 +19,7 @@ services:
       POSTGRES_USER: galactic_user
       POSTGRES_PASSWORD: secret
     ports:
-      - "5432:5432"  # Puerto externo 5432, interno 5432
+      - "5433:5432"  # Puerto externo 5432, interno 5432
     volumes:
       - ./pgdata:/var/lib/postgresql/data
       - ./db/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
@@ -28,6 +28,8 @@ services:
 
   producer:
     build: ./producer
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
       - postgres
@@ -43,6 +45,8 @@ services:
       - galactic_net
 
   agent:
+    env_file:
+      - .env
     build: ./agent
     depends_on:
       - rabbitmq

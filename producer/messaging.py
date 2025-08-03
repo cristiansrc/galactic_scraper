@@ -1,28 +1,25 @@
 import pika
 
 class RabbitMQProducer:
-    def __init__(self, amqp_uri):
-        self.amqp_uri = amqp_uri
-        self.connection = None
-        self.channel = None
-
-    def connect(self):
-        self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_uri))
+    def __init__(self, rabbit_params):
+        self.rabbit_params = rabbit_params
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(
+            host=self.rabbit_params["host"],
+            credentials=pika.PlainCredentials(
+                self.rabbit_params["user"],
+                self.rabbit_params["password"]
+            )
+        ))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue='task_queue', durable=True)
+        self.channel.queue_declare(queue=self.rabbit_params["queue"], durable=True)
 
-    def publish_task(self, task_body):
-        if not self.channel or self.channel.is_closed:
-            self.connect()
-        
+    def publish(self, message):
         self.channel.basic_publish(
             exchange='',
-            routing_key='task_queue',
-            body=task_body,
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # make message persistent
-            ))
+            routing_key=self.rabbit_params["queue"],
+            body=message,
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
 
     def close(self):
-        if self.connection and self.connection.is_open:
-            self.connection.close()
+        self.connection.close()
