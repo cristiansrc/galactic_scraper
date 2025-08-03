@@ -19,7 +19,7 @@ services:
       POSTGRES_USER: galactic_user
       POSTGRES_PASSWORD: secret
     ports:
-      - "5433:5432"  # Puerto externo 5433, interno 5432
+      - "5432:5432"  # Puerto externo 5433, interno 5432
     volumes:
       - ./pgdata:/var/lib/postgresql/data
       - ./db/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
